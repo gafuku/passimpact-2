@@ -1,26 +1,121 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #faf9f7;
+  --foreground: #1a1a19;
+  --color-brand: #006e8e; /* Conversion Teal */
+  --color-border: #e3e2de;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: #faf9f7;
+  --color-surface-raised: #f3f2ef;
+  --color-surface-invert: #1a1a19;
+  --color-border: var(--color-border);
+  --color-border-strong: #c9c8c3;
+  --color-text: #1a1a19;
+  --color-text-muted: #6b6a66;
+  --color-text-faint: #9c9b97;
+  --color-text-invert: #faf9f7;
+  --color-brand: var(--color-brand);
+  --font-sans: var(--font-nb-international), var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), "Family", Georgia, "Times New Roman", serif;
+  --spacing-inset: 1.5rem;
+  --spacing-gutter: 0.5rem;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@media (min-width: 640px) {
+  @theme inline {
+    --spacing-inset: 2rem;
+    --spacing-gutter: 0.75rem;
+  }
+}
+@media (min-width: 768px) {
+  @theme inline {
+    --spacing-inset: 2.5rem;
+    --spacing-gutter: 1rem;
+  }
+}
+@media (min-width: 1024px) {
+  @theme inline {
+    --spacing-inset: 3rem;
+    --spacing-gutter: 1.5rem;
   }
 }
 
+html {
+  scroll-behavior: smooth;
+  background-color: var(--background);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+}
+
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 200ms;
+}
+
+/* Custom animations from conversion.ai */
+@keyframes ent-fade-in {
+  0% { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-up {
+  animation: ent-fade-in 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+.bento-hover {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  opacity: 0;
+  transition: opacity .3s ease;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.card-hatch-overlay {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(227, 226, 222, 0.4),
+    rgba(227, 226, 222, 0.4) 1px,
+    transparent 1px,
+    transparent 12px
+  ), repeating-linear-gradient(
+    90deg,
+    rgba(227, 226, 222, 0.4),
+    rgba(227, 226, 222, 0.4) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+  transform: rotate(12deg);
+}
+
+.gutter-hatch-pattern {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-border),
+    var(--color-border) 1px,
+    transparent 1px,
+    transparent 8px
+  );
+}
+
+.group:hover .bento-hover {
+  opacity: 1;
+}
+
+.nav-trigger[data-active] .nav-chevron {
+  transform: rotate(180deg);
 }
