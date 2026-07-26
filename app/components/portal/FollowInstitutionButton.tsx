@@ -1,14 +1,16 @@
 "use client";
 
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useAuth } from "./AuthContext";
 
 export function FollowInstitutionButton({ slug }: { slug: string }) {
-  const { user, hydrated, isFollowingInstitution, toggleFollowInstitution } = useAuth();
+  const { status } = useSession();
+  const { isFollowingInstitution, toggleFollowInstitution } = useAuth();
 
-  if (!hydrated) return null;
+  if (status === "loading") return null;
 
-  if (!user) {
+  if (status === "unauthenticated") {
     return (
       <Link
         href={`/sign-in?redirect=${encodeURIComponent(`/report/${slug}`)}`}

@@ -1,16 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useAuth } from "./AuthContext";
+import { useSession } from "next-auth/react";
 
 export function NavAuthArea() {
-  const { user, hydrated } = useAuth();
+  const { data: session, status } = useSession();
 
-  if (!hydrated) {
+  if (status === "loading") {
     return <span className="hidden sm:inline h-4 w-16" aria-hidden />;
   }
 
-  if (!user) {
+  if (!session?.user) {
     return (
       <Link href="/sign-in" className="hidden text-xs text-text-muted hover:text-text transition-colors sm:inline">
         Log in
@@ -18,12 +18,17 @@ export function NavAuthArea() {
     );
   }
 
+  const isAdmin = session.user.role === "ADMIN";
+
   return (
-    <Link href="/portal" className="hidden sm:flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors">
+    <Link
+      href={isAdmin ? "/admin/extract" : "/portal"}
+      className="hidden sm:flex items-center gap-2 text-xs text-text-muted hover:text-text transition-colors"
+    >
       <span className="flex h-6 w-6 items-center justify-center rounded-full bg-text text-text-invert text-[10px] font-semibold">
-        {user.name.slice(0, 1).toUpperCase()}
+        {(session.user.name ?? "?").slice(0, 1).toUpperCase()}
       </span>
-      My Portal
+      {isAdmin ? "Admin Console" : "My Portal"}
     </Link>
   );
 }

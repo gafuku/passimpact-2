@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import type { Institution, Report } from "../report/reportData";
+import type { Institution } from "../report/reportData";
+import type { PublicReport } from "../../hooks/publicReportTypes";
 import { useChatThread } from "../report/useChatThread";
 
 const SUGGESTIONS = [
@@ -13,8 +14,8 @@ const SUGGESTIONS = [
 
 type LargeReportChatProps = {
   institution: Institution;
-  report: Report;
-  previousReport?: Report;
+  report: PublicReport;
+  previousReport?: PublicReport;
   open: boolean;
   onClose: () => void;
 };
@@ -60,7 +61,7 @@ export function LargeReportChat({ institution, report, previousReport, open, onC
           <div className="min-w-0">
             <p className="text-xs font-semibold text-text truncate">Ask about {institution.name}</p>
             <p className="text-xs text-text-faint mt-0.5">
-              {report.fy} · {user ? `Signed in as ${user.name.split(" ")[0]} — history saved` : "Guest session"}
+              {report.fy} · {user ? `Signed in as ${(user.name ?? "you").split(" ")[0]} — history saved` : "Guest session"}
             </p>
           </div>
           <div className="flex items-center gap-4 shrink-0">

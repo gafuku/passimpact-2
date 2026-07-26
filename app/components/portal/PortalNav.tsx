@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAuth } from "./AuthContext";
+import { useSession, signOut } from "next-auth/react";
 import { IconLogo, IconHome, IconBuilding, IconWallet, IconSettings } from "../icons";
 import type { SVGProps } from "react";
 
@@ -16,7 +16,8 @@ const LINKS: { href: string; label: string; icon: (props: SVGProps<SVGSVGElement
 
 function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
-  const { user, signOut } = useAuth();
+  const { data: session } = useSession();
+  const user = session?.user;
 
   return (
     <>
@@ -59,7 +60,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
         <button
-          onClick={signOut}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="flex w-full items-center gap-2.5 rounded px-3 py-2.5 text-xs font-medium text-text-muted hover:bg-surface-raised hover:text-text transition-colors"
         >
           Sign out

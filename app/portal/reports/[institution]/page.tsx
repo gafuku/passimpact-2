@@ -1,91 +1,15 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { institutions, getInstitution, getReportsForInstitution } from "../../../components/report/reportData";
-
-export async function generateStaticParams() {
-  return institutions.map((i) => ({ institution: i.slug }));
-}
+import { prisma } from "@/prisma";
+import { PortalInstitutionReportsView } from "./PortalInstitutionReportsView";
 
 export async function generateMetadata({ params }: { params: Promise<{ institution: string }> }): Promise<Metadata> {
   const { institution: slug } = await params;
-  const institution = getInstitution(slug);
+  const institution = await prisma.institution.findUnique({ where: { slug }, select: { name: true } });
   if (!institution) return { title: "Institution not found | Pass Impact" };
   return { title: `${institution.name} — Reports | Pass Impact Portal` };
 }
 
 export default async function PortalInstitutionReportsPage({ params }: { params: Promise<{ institution: string }> }) {
   const { institution: slug } = await params;
-  const institution = getInstitution(slug);
-  if (!institution) notFound();
-  const reports = getReportsForInstitution(slug);
-
-  return (
-    <div>
-      <Link href="/portal/institutions" className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text transition-colors mb-8">
-        ← My Institutions
-      </Link>
-
-      <div className="flex items-center gap-4 mb-3">
-        <div className="flex h-14 w-14 items-center justify-center rounded-full bg-text text-text-invert text-lg font-semibold shrink-0">
-          {institution.shortName.slice(0, 1)}
-        </div>
-        <div>
-          <h1 className="text-lg font-sans font-normal tracking-tight text-text">{institution.name}</h1>
-          <p className="text-xs text-text-muted">{institution.type} · {institution.location}</p>
-        </div>
-      </div>
-      <p className="mt-4 text-text-muted max-w-xl">
-        {reports.length} audited {reports.length === 1 ? "report" : "reports"} on file, most recent first. Open one for
-        the full breakdown and a chat panel dedicated to that report.
-      </p>
-
-      <div className="mt-10 flex flex-col gap-4">
-        {reports.map((report, i) => (
-          <Link
-            key={report.year}
-            href={`/portal/reports/${institution.slug}/${report.year}`}
-            className="group flex flex-col sm:flex-row sm:items-center gap-4 border border-border bg-white p-6 transition-all hover:border-border-strong hover:-translate-y-0.5"
-          >
-            <div className="flex items-center gap-4 sm:w-40 shrink-0">
-              <div className="flex h-12 w-12 items-center justify-center bg-surface-raised border border-border text-xs font-semibold text-text shrink-0">
-                {report.year}
-              </div>
-              <div>
-                <p className="text-xs font-semibold text-text">{report.fy}</p>
-                {i === 0 && (
-                  <span className="inline-flex mt-1 items-center rounded-full bg-brand/10 border border-brand/20 px-2 py-0.5 text-[10px] font-medium text-brand">
-                    Most recent
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-faint">Revenue</p>
-                <p className="mt-1 text-xs font-semibold text-text tabular-nums">${report.totalRevenue.toFixed(2)}B</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-faint">Endowment</p>
-                <p className="mt-1 text-xs font-semibold text-text tabular-nums">${report.endowment.toFixed(1)}B</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-faint">Opinion</p>
-                <p className="mt-1 text-xs font-medium text-[#006300]">✓ {report.auditOpinion}</p>
-              </div>
-              <div>
-                <p className="text-[10px] uppercase tracking-wider text-text-faint">Published</p>
-                <p className="mt-1 text-xs text-text-muted">{report.published}</p>
-              </div>
-            </div>
-
-            <span className="text-text text-xs font-medium flex items-center gap-1 sm:ml-4 shrink-0 group-hover:translate-x-1 transition-transform">
-              Explore →
-            </span>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
+  return <PortalInstitutionReportsView slug={slug} />;
 }

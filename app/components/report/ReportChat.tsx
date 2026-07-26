@@ -1,10 +1,11 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import type { Institution, Report } from "./reportData";
+import type { Institution } from "./reportData";
+import type { PublicReport } from "../../hooks/publicReportTypes";
 import { useChatThread } from "./useChatThread";
 
-export function ReportChat({ institution, report, previousReport }: { institution: Institution; report: Report; previousReport?: Report }) {
+export function ReportChat({ institution, report, previousReport }: { institution: Institution; report: PublicReport; previousReport?: PublicReport }) {
   const { user, messages, typing, send, clear } = useChatThread(institution, report, previousReport);
   const [open, setOpen] = useState(false);
   const [input, setInput] = useState("");
@@ -27,7 +28,7 @@ export function ReportChat({ institution, report, previousReport }: { institutio
             <div>
               <p className="text-xs font-semibold text-text">Ask about {institution.name} · {report.fy}</p>
               <p className="text-[10px] text-text-faint">
-                {user ? `Signed in as ${user.name.split(" ")[0]} — history saved` : "Guest session — nothing is saved"}
+                {user ? `Signed in as ${(user.name ?? "you").split(" ")[0]} — history saved` : "Guest session — nothing is saved"}
               </p>
             </div>
             <div className="flex items-center gap-3">

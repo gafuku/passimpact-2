@@ -2,12 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type PortalUser = { name: string; email: string };
-
 export type NotificationPrefs = { newReports: boolean; fundUpdates: boolean };
 
 type AuthState = {
-  user: PortalUser | null;
   followedInstitutions: string[];
   followedFunds: string[];
   notificationPrefs: NotificationPrefs;
@@ -15,9 +12,6 @@ type AuthState = {
 
 type AuthContextValue = AuthState & {
   hydrated: boolean;
-  signIn: (name: string, email: string) => void;
-  signOut: () => void;
-  updateProfile: (name: string, email: string) => void;
   updateNotificationPrefs: (prefs: Partial<NotificationPrefs>) => void;
   toggleFollowInstitution: (slug: string) => void;
   toggleFollowFund: (id: string) => void;
@@ -25,19 +19,15 @@ type AuthContextValue = AuthState & {
   isFollowingFund: (id: string) => boolean;
 };
 
-const STORAGE_KEY = "pass-impact:portal-session";
+const STORAGE_KEY = "pass-impact:portal-follows";
 
+// Follows start empty — institutions/funds now come from whatever's actually been
+// published to the database, so there's no fixed slug we can safely pre-populate.
 const DEFAULT_STATE: AuthState = {
-  user: null,
   followedInstitutions: [],
   followedFunds: [],
   notificationPrefs: { newReports: true, fundUpdates: true },
 };
-
-// New sign-ins start pre-populated with a couple of tracked items so the
-// portal doesn't feel empty on first login — this is a demo convenience, not
-// a claim about real donation history.
-const STARTER_FOLLOWS = { institutions: ["michigan"], funds: ["davidson-family-scholarship"] };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
@@ -64,20 +54,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [state, hydrated]);
 
-  const signIn = useCallback((name: string, email: string) => {
-    setState((prev) => ({
-      user: { name, email },
-      followedInstitutions: prev.followedInstitutions.length ? prev.followedInstitutions : STARTER_FOLLOWS.institutions,
-      followedFunds: prev.followedFunds.length ? prev.followedFunds : STARTER_FOLLOWS.funds,
-    }));
-  }, []);
-
-  const signOut = useCallback(() => setState((prev) => ({ ...prev, user: null })), []);
-
-  const updateProfile = useCallback((name: string, email: string) => {
-    setState((prev) => ({ ...prev, user: { name, email } }));
-  }, []);
-
   const updateNotificationPrefs = useCallback((prefs: Partial<NotificationPrefs>) => {
     setState((prev) => ({ ...prev, notificationPrefs: { ...prev.notificationPrefs, ...prefs } }));
   }, []);
@@ -101,9 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const value: AuthContextValue = {
     ...state,
     hydrated,
-    signIn,
-    signOut,
-    updateProfile,
     updateNotificationPrefs,
     toggleFollowInstitution,
     toggleFollowFund,

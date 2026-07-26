@@ -56,7 +56,7 @@ export function ReportOverview({ institution, report, previousReport }: { instit
       </div>
 
       {/* KPI row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-border mb-16">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-border mb-12">
         <StatTile
           label="Total revenue"
           value={`$${report.totalRevenue.toFixed(2)}B`}
@@ -67,6 +67,18 @@ export function ReportOverview({ institution, report, previousReport }: { instit
         <StatTile label="Endowment" value={`$${report.endowment.toFixed(1)}B`} sub="market value" />
       </div>
 
+      {/* Financial Position */}
+      <div className="mb-16">
+        <span className="text-xs font-semibold uppercase tracking-wider text-text-faint">Financial Position</span>
+        <h2 className="mt-2 text-lg font-sans text-text">Balance Sheet Snapshot</h2>
+        <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 border-t border-l border-border">
+          <StatTile label="Total Assets" value={`$${report.totalAssets.toFixed(2)}B`} />
+          <StatTile label="Total Liabilities" value={`$${report.totalLiabilities.toFixed(2)}B`} />
+          <StatTile label="Total Net Assets" value={`$${report.totalNetAssets.toFixed(2)}B`} />
+          <StatTile label="Total Debt" value={`$${report.totalDebt.toFixed(2)}B`} sub="bonds & notes payable" />
+        </div>
+      </div>
+
       {/* Cash Flow Story */}
       <div className="mb-16">
         <span className="text-xs font-semibold uppercase tracking-wider text-text-faint">Cash Flow Story</span>
@@ -75,7 +87,7 @@ export function ReportOverview({ institution, report, previousReport }: { instit
           {report.fy} revenue and operating expenses, broken down by source and by function.
         </p>
 
-        <div className="mt-8 grid gap-10 md:grid-cols-2">
+        <div className="mt-8 flex flex-col gap-10">
           <div>
             <p className="text-xs font-semibold text-text mb-3">Money in — ${report.totalRevenue.toFixed(2)}B</p>
             <StackedFlowBar rows={report.revenueBySource} total={report.totalRevenue} />

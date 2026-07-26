@@ -31,7 +31,7 @@ export function Lockbox({ report }: { report: Report }) {
         only reaches a small slice of the operating budget each year.
       </p>
 
-      <div className="mt-8 grid gap-10 md:grid-cols-2 max-w-3xl">
+      <div className="mt-8 flex flex-col gap-10 max-w-3xl">
         <Meter
           label="Permanently restricted — legally locked forever"
           valueLabel={`${lockedShare.toFixed(0)}% of endowment`}

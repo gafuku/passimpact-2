@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import type { Institution, Report } from "../report/reportData";
+import type { Institution } from "../report/reportData";
+import type { PublicReport } from "../../hooks/publicReportTypes";
 import { LargeReportChat } from "./LargeReportChat";
 
-export function ReportChatLauncher({ institution, report, previousReport }: { institution: Institution; report: Report; previousReport?: Report }) {
+export function ReportChatLauncher({ institution, report, previousReport }: { institution: Institution; report: PublicReport; previousReport?: PublicReport }) {
   const [open, setOpen] = useState(false);
 
   return (

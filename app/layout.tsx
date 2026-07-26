@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import localFont from "next/font/local";
 import { AuthProvider } from "./components/portal/AuthContext";
+import { SessionProvider } from "./components/SessionProvider";
+import { ToastProvider } from "./components/ToastProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -44,7 +46,11 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${playfair.variable} ${nbInternational.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <SessionProvider>
+          <AuthProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );

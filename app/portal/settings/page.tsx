@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useAuth } from "../../components/portal/AuthContext";
+import { signOut, useSession } from "next-auth/react";
+import { useAuth } from "@/app/components/portal/AuthContext";
 
 function Toggle({ checked, onChange, label, sub }: { checked: boolean; onChange: (v: boolean) => void; label: string; sub: string }) {
   return (
@@ -24,18 +24,9 @@ function Toggle({ checked, onChange, label, sub }: { checked: boolean; onChange:
 }
 
 export default function PortalSettingsPage() {
-  const { user, updateProfile, notificationPrefs, updateNotificationPrefs, signOut } = useAuth();
-  const [name, setName] = useState(user?.name ?? "");
-  const [email, setEmail] = useState(user?.email ?? "");
-  const [saved, setSaved] = useState(false);
-
-  function handleSave(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim() || !email.trim()) return;
-    updateProfile(name.trim(), email.trim());
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
-  }
+  const { data: session } = useSession();
+  const { notificationPrefs, updateNotificationPrefs } = useAuth();
+  const user = session?.user;
 
   return (
     <div className="max-w-lg">
@@ -44,34 +35,17 @@ export default function PortalSettingsPage() {
 
       <div className="mt-8 border border-border bg-white p-6">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-text-faint mb-4">Profile</h2>
-        <form onSubmit={handleSave} className="flex flex-col gap-4">
-          <label className="flex flex-col gap-1.5 text-xs text-text-muted">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5 text-xs text-text-muted">
             Name
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="rounded border border-border bg-white px-3 py-2.5 text-sm text-text focus:outline-none focus:border-text"
-            />
-          </label>
-          <label className="flex flex-col gap-1.5 text-xs text-text-muted">
-            Email
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              type="email"
-              className="rounded border border-border bg-white px-3 py-2.5 text-sm text-text focus:outline-none focus:border-text"
-            />
-          </label>
-          <div className="flex items-center gap-3">
-            <button
-              type="submit"
-              className="rounded bg-text text-text-invert border border-white/10 px-5 py-2.5 text-sm font-medium hover:brightness-125 transition-all"
-            >
-              Save changes
-            </button>
-            {saved && <span className="text-xs text-[#006300]">Saved</span>}
+            <p className="rounded border border-border bg-surface px-3 py-2.5 text-sm text-text">{user?.name}</p>
           </div>
-        </form>
+          <div className="flex flex-col gap-1.5 text-xs text-text-muted">
+            Email
+            <p className="rounded border border-border bg-surface px-3 py-2.5 text-sm text-text">{user?.email}</p>
+          </div>
+          <p className="text-xs text-text-faint">Editing your profile isn&apos;t available yet.</p>
+        </div>
       </div>
 
       <div className="mt-6 border border-border bg-white p-6">
@@ -98,7 +72,7 @@ export default function PortalSettingsPage() {
       <div className="mt-6 border border-border bg-white p-6">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-text-faint mb-3">Session</h2>
         <button
-          onClick={signOut}
+          onClick={() => signOut({ callbackUrl: "/" })}
           className="rounded border border-border px-5 py-2.5 text-sm font-medium text-text hover:bg-surface-raised transition-colors"
         >
           Sign out

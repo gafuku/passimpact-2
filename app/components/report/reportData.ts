@@ -34,6 +34,10 @@ export type Report = {
   totalRevenue: number;
   totalExpenses: number;
   netPosition: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  totalNetAssets: number;
+  totalDebt: number;
   endowment: number;
   privateGiftsOperating: number;
   revenueBySource: LineItem[];
@@ -50,6 +54,9 @@ type Seed = {
   totalRevenueFY25: number;
   totalExpensesFY25: number;
   endowmentFY25: number;
+  totalAssetsFY25: number;
+  totalLiabilitiesFY25: number;
+  totalDebtFY25: number;
   revenueGrowthFY22to25: number;
   giftsGrowthFY22to25: number;
   giftsShareFY25: number;
@@ -67,6 +74,7 @@ const PERMANENTLY_RESTRICTED = 0.88;
 function buildInstitutionReports(seed: Seed): { institution: Institution; reports: Report[] } {
   const {
     slug, name, shortName, type, location, totalRevenueFY25, totalExpensesFY25, endowmentFY25,
+    totalAssetsFY25, totalLiabilitiesFY25, totalDebtFY25,
     revenueGrowthFY22to25, giftsGrowthFY22to25, giftsShareFY25, patientCareShare = 0, namedFundsAvailable,
   } = seed;
 
@@ -80,6 +88,12 @@ function buildInstitutionReports(seed: Seed): { institution: Institution; report
     const totalExpenses = +(totalExpensesFY25 / Math.pow(1 + revenueRate, yearsBack)).toFixed(3);
     const privateGiftsOperating = +(privateGiftsFY25 / Math.pow(1 + giftsRate, yearsBack)).toFixed(3);
     const endowment = +(endowmentFY25 / Math.pow(1 + ENDOWMENT_ANNUAL_GROWTH, yearsBack)).toFixed(2);
+    
+    // Balance sheet items growing roughly with endowment
+    const totalAssets = +(totalAssetsFY25 / Math.pow(1 + ENDOWMENT_ANNUAL_GROWTH, yearsBack)).toFixed(2);
+    const totalLiabilities = +(totalLiabilitiesFY25 / Math.pow(1 + ENDOWMENT_ANNUAL_GROWTH, yearsBack)).toFixed(2);
+    const totalNetAssets = +(totalAssets - totalLiabilities).toFixed(2);
+    const totalDebt = +(totalDebtFY25 / Math.pow(1 + ENDOWMENT_ANNUAL_GROWTH, yearsBack)).toFixed(2);
 
     const patientCareRevenue = +(totalRevenue * patientCareShare).toFixed(3);
     const revenueRemainder = totalRevenue - patientCareRevenue - privateGiftsOperating;
@@ -111,6 +125,10 @@ function buildInstitutionReports(seed: Seed): { institution: Institution; report
       totalRevenue,
       totalExpenses,
       netPosition: +(totalRevenue - totalExpenses).toFixed(3),
+      totalAssets,
+      totalLiabilities,
+      totalNetAssets,
+      totalDebt,
       endowment,
       privateGiftsOperating,
       revenueBySource,
@@ -138,6 +156,9 @@ const SEEDS: Seed[] = [
     totalRevenueFY25: 13.45,
     totalExpensesFY25: 13.1,
     endowmentFY25: 21.2,
+    totalAssetsFY25: 35.1,
+    totalLiabilitiesFY25: 10.2,
+    totalDebtFY25: 4.5,
     revenueGrowthFY22to25: 0.281,
     giftsGrowthFY22to25: 0.75,
     giftsShareFY25: 0.735 / 13.45,
@@ -150,9 +171,12 @@ const SEEDS: Seed[] = [
     shortName: "Harvard",
     type: "Private Research University",
     location: "Cambridge, MA",
-    totalRevenueFY25: 6.5,
-    totalExpensesFY25: 6.2,
-    endowmentFY25: 52,
+    totalRevenueFY25: 6.68,
+    totalExpensesFY25: 6.79,
+    endowmentFY25: 56.93,
+    totalAssetsFY25: 82.42,
+    totalLiabilitiesFY25: 13.73,
+    totalDebtFY25: 8.29,
     revenueGrowthFY22to25: 0.14,
     giftsGrowthFY22to25: 0.32,
     giftsShareFY25: 0.13,
@@ -164,9 +188,12 @@ const SEEDS: Seed[] = [
     shortName: "Stanford",
     type: "Private Research University",
     location: "Stanford, CA",
-    totalRevenueFY25: 9.5,
-    totalExpensesFY25: 9.1,
-    endowmentFY25: 36,
+    totalRevenueFY25: 19.39,
+    totalExpensesFY25: 18.94,
+    endowmentFY25: 40.79,
+    totalAssetsFY25: 87.18,
+    totalLiabilitiesFY25: 19.06,
+    totalDebtFY25: 9.84,
     revenueGrowthFY22to25: 0.19,
     giftsGrowthFY22to25: 0.41,
     giftsShareFY25: 0.11,
@@ -182,6 +209,9 @@ const SEEDS: Seed[] = [
     totalRevenueFY25: 5.3,
     totalExpensesFY25: 5.0,
     endowmentFY25: 40,
+    totalAssetsFY25: 48.0,
+    totalLiabilitiesFY25: 7.0,
+    totalDebtFY25: 4.0,
     revenueGrowthFY22to25: 0.12,
     giftsGrowthFY22to25: 0.28,
     giftsShareFY25: 0.12,
@@ -196,6 +226,9 @@ const SEEDS: Seed[] = [
     totalRevenueFY25: 5.8,
     totalExpensesFY25: 5.5,
     endowmentFY25: 24,
+    totalAssetsFY25: 35.0,
+    totalLiabilitiesFY25: 5.0,
+    totalDebtFY25: 3.0,
     revenueGrowthFY22to25: 0.17,
     giftsGrowthFY22to25: 0.38,
     giftsShareFY25: 0.14,

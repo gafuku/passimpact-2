@@ -4,18 +4,16 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
-import { institutions, institutionTypes, getLatestReport } from "../components/report/reportData";
+import { usePublicInstitutions } from "../hooks/usePublicInstitutions";
 
 export default function UniversitiesBrowsePage() {
+  const { institutions, loading, error } = usePublicInstitutions();
   const [typeFilter, setTypeFilter] = useState<string>("All");
   const [query, setQuery] = useState("");
 
-  const cards = useMemo(
-    () => institutions.map((institution) => ({ institution, latest: getLatestReport(institution.slug)! })),
-    []
-  );
+  const institutionTypes = useMemo(() => Array.from(new Set(institutions.map((i) => i.type))), [institutions]);
 
-  const filtered = cards.filter(({ institution }) => {
+  const filtered = institutions.filter((institution) => {
     const matchesType = typeFilter === "All" || institution.type === typeFilter;
     const matchesQuery = query.trim() === "" || institution.name.toLowerCase().includes(query.trim().toLowerCase());
     return matchesType && matchesQuery;
@@ -63,11 +61,17 @@ export default function UniversitiesBrowsePage() {
 
         <section className="bg-surface py-12 flex-1">
           <div className="mx-auto max-w-6xl px-inset">
-            {filtered.length === 0 ? (
-              <p className="text-xs text-text-muted italic">No institutions match that search.</p>
+            {loading ? (
+              <p className="text-xs text-text-muted italic">Loading institutions…</p>
+            ) : error ? (
+              <p className="text-xs text-[#d03b3b]">Couldn&apos;t load institutions: {error}</p>
+            ) : filtered.length === 0 ? (
+              <p className="text-xs text-text-muted italic">
+                {institutions.length === 0 ? "No institutions have been published yet." : "No institutions match that search."}
+              </p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 border-t border-l border-border">
-                {filtered.map(({ institution, latest }) => (
+                {filtered.map((institution) => (
                   <Link
                     key={institution.slug}
                     href={`/report/${institution.slug}`}
@@ -85,23 +89,27 @@ export default function UniversitiesBrowsePage() {
 
                     <p className="text-xs text-text-muted mb-6">{institution.type}</p>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-text-faint">Latest revenue</p>
-                        <p className="mt-1 text-xs font-semibold text-text tabular-nums">${latest.totalRevenue.toFixed(2)}B</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-wider text-text-faint">Endowment</p>
-                        <p className="mt-1 text-xs font-semibold text-text tabular-nums">${latest.endowment.toFixed(1)}B</p>
-                      </div>
-                    </div>
+                    {institution.latest && (
+                      <>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-text-faint">Latest revenue</p>
+                            <p className="mt-1 text-xs font-semibold text-text tabular-nums">${institution.latest.totalRevenue.toFixed(2)}B</p>
+                          </div>
+                          <div>
+                            <p className="text-[10px] uppercase tracking-wider text-text-faint">Endowment</p>
+                            <p className="mt-1 text-xs font-semibold text-text tabular-nums">${institution.latest.endowment.toFixed(1)}B</p>
+                          </div>
+                        </div>
 
-                    <div className="mt-auto pt-6 flex items-center justify-between text-xs">
-                      <span className="inline-flex items-center gap-1 rounded-full border border-[#0ca30c]/30 bg-[#0ca30c]/10 px-2.5 py-0.5 text-[10px] font-mono font-medium text-[#006300]">
-                        ✓ {latest.fy} on file
-                      </span>
-                      <span className="text-text font-medium group-hover:translate-x-1 transition-transform">View reports →</span>
-                    </div>
+                        <div className="mt-auto pt-6 flex items-center justify-between text-xs">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-[#0ca30c]/30 bg-[#0ca30c]/10 px-2.5 py-0.5 text-[10px] font-mono font-medium text-[#006300]">
+                            ✓ {institution.latest.fy} on file
+                          </span>
+                          <span className="text-text font-medium group-hover:translate-x-1 transition-transform">View reports →</span>
+                        </div>
+                      </>
+                    )}
                   </Link>
                 ))}
               </div>
