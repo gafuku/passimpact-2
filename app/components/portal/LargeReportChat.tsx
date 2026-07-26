@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Institution } from "../report/reportData";
 import type { PublicReport } from "../../hooks/publicReportTypes";
 import { useChatThread } from "../report/useChatThread";
+import { ChatMarkdown } from "../report/ChatMarkdown";
 import { IconHistory, IconPlus, IconX } from "../icons";
 
 const SUGGESTIONS = [
@@ -182,7 +183,7 @@ export function LargeReportChat({ institution, report, previousReport, open, onC
                       m.role === "user" ? "bg-text text-text-invert" : "bg-surface-raised text-text border border-border"
                     }`}
                   >
-                    {m.text}
+                    <ChatMarkdown text={m.text} />
                   </div>
                 </div>
               ))}
