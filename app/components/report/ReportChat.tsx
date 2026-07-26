@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import type { Institution } from "./reportData";
 import type { PublicReport } from "../../hooks/publicReportTypes";
 import { useChatThread } from "./useChatThread";
+import { ChatMarkdown } from "./ChatMarkdown";
 
 export function ReportChat({ institution, report, previousReport }: { institution: Institution; report: PublicReport; previousReport?: PublicReport }) {
   const { user, messages, typing, send, clear } = useChatThread(institution, report, previousReport);
@@ -49,7 +50,7 @@ export function ReportChat({ institution, report, previousReport }: { institutio
                     m.role === "user" ? "bg-text text-text-invert" : "bg-surface-raised text-text border border-border"
                   }`}
                 >
-                  {m.text}
+                  <ChatMarkdown text={m.text} />
                 </div>
               </div>
             ))}
