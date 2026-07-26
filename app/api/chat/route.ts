@@ -80,23 +80,27 @@ Rules:
 export async function POST(req: Request) {
   try {
     const session = await auth();
-    const { message, reportId, history = [] } = await req.json();
+    const { message, reportId, sessionId, history = [] } = await req.json();
 
     if (!message || !reportId) {
       return NextResponse.json({ error: "Missing message or reportId" }, { status: 400 });
     }
 
-    // Guests get a real answer too — it just isn't saved anywhere. Only a signed-in
-    // user gets a ChatSession, which is what makes their history persist across visits.
+    // Guests get a real answer too — it just isn't saved anywhere. Only a signed-in user
+    // gets a ChatSession. Omitting sessionId always starts a brand-new thread; passing one
+    // continues that specific past conversation instead of collapsing everything into one.
     let chatSessionId: string | null = null;
     if (session?.user?.id) {
-      const existingSession = await prisma.chatSession.findFirst({
-        where: { userId: session.user.id, reportId },
-      });
+      if (sessionId) {
+        const existing = await prisma.chatSession.findFirst({
+          where: { id: sessionId, userId: session.user.id, reportId },
+        });
+        chatSessionId = existing?.id ?? null;
+      }
 
-      chatSessionId = existingSession
-        ? existingSession.id
-        : (await prisma.chatSession.create({ data: { userId: session.user.id, reportId } })).id;
+      if (!chatSessionId) {
+        chatSessionId = (await prisma.chatSession.create({ data: { userId: session.user.id, reportId } })).id;
+      }
 
       await prisma.chatMessage.create({
         data: { chatSessionId, role: "user", content: message },
@@ -131,7 +135,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ text: aiMessage });
+    return NextResponse.json({ text: aiMessage, sessionId: chatSessionId });
   } catch (error) {
     console.error("Chat API Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -143,15 +147,22 @@ export async function GET(req: Request) {
     const session = await auth();
     const { searchParams } = new URL(req.url);
     const reportId = searchParams.get("reportId");
+    const sessionId = searchParams.get("sessionId");
 
     if (!session?.user?.id || !reportId) {
-      return NextResponse.json({ messages: [] });
+      return NextResponse.json({ messages: [], sessionId: null });
     }
 
-    const chatSession = await prisma.chatSession.findFirst({
-      where: { userId: session.user.id, reportId },
-      include: { messages: { orderBy: { createdAt: "asc" } } },
-    });
+    const chatSession = sessionId
+      ? await prisma.chatSession.findFirst({
+          where: { id: sessionId, userId: session.user.id, reportId },
+          include: { messages: { orderBy: { createdAt: "asc" } } },
+        })
+      : await prisma.chatSession.findFirst({
+          where: { userId: session.user.id, reportId },
+          orderBy: { createdAt: "desc" },
+          include: { messages: { orderBy: { createdAt: "asc" } } },
+        });
 
     const messages =
       chatSession?.messages.map((msg) => ({
@@ -160,7 +171,7 @@ export async function GET(req: Request) {
         text: msg.content,
       })) ?? [];
 
-    return NextResponse.json({ messages });
+    return NextResponse.json({ messages, sessionId: chatSession?.id ?? null });
   } catch (error) {
     console.error("Chat GET Error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -175,17 +186,18 @@ export async function DELETE(req: Request) {
 
   try {
     const { searchParams } = new URL(req.url);
-    const reportId = searchParams.get("reportId");
-    if (!reportId) {
-      return NextResponse.json({ error: "Missing reportId" }, { status: 400 });
+    const sessionId = searchParams.get("sessionId");
+    if (!sessionId) {
+      return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
     }
 
     const chatSession = await prisma.chatSession.findFirst({
-      where: { userId: session.user.id, reportId },
+      where: { id: sessionId, userId: session.user.id },
     });
 
     if (chatSession) {
       await prisma.chatMessage.deleteMany({ where: { chatSessionId: chatSession.id } });
+      await prisma.chatSession.delete({ where: { id: chatSession.id } });
     }
 
     return NextResponse.json({ success: true });

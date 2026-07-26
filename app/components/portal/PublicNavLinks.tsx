@@ -1,9 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { IconChevronDown } from "../icons";
 
-/** The marketing nav dropdowns + links — hidden once a donor is signed in, so the nav doesn't invite them back to public pages. */
+/** The marketing nav links — hidden once a donor is signed in, so the nav doesn't invite them back to public pages. */
 export function PublicNavLinks() {
   const { data: session, status } = useSession();
   if (status !== "loading" && session?.user) return null;
@@ -11,28 +10,8 @@ export function PublicNavLinks() {
   return (
     <ul className="hidden items-center gap-1 lg:flex text-text-muted">
       <li>
-        <button className="hover:text-text inline-flex items-center gap-1 px-3 py-2 text-xs transition-colors">
-          Platform <IconChevronDown className="h-3 w-3 opacity-50" />
-        </button>
-      </li>
-      <li>
-        <button className="hover:text-text inline-flex items-center gap-1 px-3 py-2 text-xs transition-colors">
-          Features <IconChevronDown className="h-3 w-3 opacity-50" />
-        </button>
-      </li>
-      <li>
-        <button className="hover:text-text inline-flex items-center gap-1 px-3 py-2 text-xs transition-colors">
-          Resources <IconChevronDown className="h-3 w-3 opacity-50" />
-        </button>
-      </li>
-      <li>
         <a href="/report" className="hover:text-text px-3 py-2 text-xs transition-colors">
           Institutions
-        </a>
-      </li>
-      <li>
-        <a href="/about" className="hover:text-text px-3 py-2 text-xs transition-colors">
-          About
         </a>
       </li>
     </ul>
