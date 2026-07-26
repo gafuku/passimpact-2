@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ instituti
   if (!institution) return { title: "Institution not found | Pass Impact" };
   return {
     title: `${institution.name} — Reports on file | Pass Impact`,
-    description: `Every audited financial report Pass Impact has on file for ${institution.name}, most recent first.`,
+    description: `Every audited financial report Pass Impact has on the file for ${institution.name}, most recent first.`,
   };
 }
 
