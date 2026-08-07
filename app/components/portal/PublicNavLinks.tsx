@@ -14,6 +14,11 @@ export function PublicNavLinks() {
           Institutions
         </a>
       </li>
+      <li>
+        <a href="/report/analytics" className="hover:text-text px-3 py-2 text-xs transition-colors">
+          Analytics
+        </a>
+      </li>
     </ul>
   );
 }

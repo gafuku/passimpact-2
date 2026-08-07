@@ -2,11 +2,33 @@
 
 import Link from "next/link";
 import { useInstitutionReports } from "@/app/hooks/useInstitutionReports";
+import { Skeleton, ReportRowSkeleton } from "@/app/components/Skeleton";
+import { ChartCard } from "@/app/components/analytics/shared";
+import { InstitutionRevenueExpenseByYearChart, InstitutionEndowmentTrendChart } from "@/app/components/analytics/TrendCharts";
+import { InstitutionLocationMap } from "@/app/components/analytics/USMap";
 
 export function PortalInstitutionReportsView({ slug }: { slug: string }) {
   const { institution, reports, loading, error } = useInstitutionReports(slug);
 
-  if (loading) return <p className="text-xs text-text-muted italic">Loading…</p>;
+  if (loading) {
+    return (
+      <div className="flex flex-col gap-8">
+        <div className="flex items-center gap-4">
+          <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+          <div>
+            <Skeleton className="h-4 w-56 mb-2" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+        </div>
+        <Skeleton className="h-3 w-full max-w-xl" />
+        <div className="flex flex-col gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <ReportRowSkeleton key={i} />
+          ))}
+        </div>
+      </div>
+    );
+  }
 
   if (error || !institution) {
     return <p className="text-xs text-[#d03b3b]">{error ? `Couldn't load this institution: ${error}` : "Institution not found."}</p>;
@@ -79,6 +101,26 @@ export function PortalInstitutionReportsView({ slug }: { slug: string }) {
             </span>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-16 flex flex-col gap-6">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-wider text-text-faint">Analytics</span>
+          <h2 className="mt-2 text-lg font-sans text-text">Comparing {institution.shortName}'s years</h2>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartCard title="Revenue vs. expenses by year" subtitle="Every fiscal year on file, side by side.">
+            <InstitutionRevenueExpenseByYearChart points={reports} />
+          </ChartCard>
+          <ChartCard title="Endowment & assets over time" subtitle="Market value by fiscal year.">
+            <InstitutionEndowmentTrendChart points={reports} />
+          </ChartCard>
+        </div>
+
+        <ChartCard title="Where this institution is located" subtitle={institution.location}>
+          <InstitutionLocationMap location={institution.location} />
+        </ChartCard>
       </div>
     </div>
   );

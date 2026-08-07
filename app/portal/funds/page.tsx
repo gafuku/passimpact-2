@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "../../components/portal/AuthContext";
 import { usePublicNamedFunds } from "../../hooks/usePublicNamedFunds";
 import { usePublicInstitutions } from "../../hooks/usePublicInstitutions";
+import { Skeleton } from "../../components/Skeleton";
 
 export default function PortalFundsPage() {
   const { followedFunds, toggleFollowFund } = useAuth();
@@ -25,7 +26,28 @@ export default function PortalFundsPage() {
       </p>
 
       {loading ? (
-        <p className="mt-8 text-xs text-text-muted italic">Loading named funds…</p>
+        <div className="mt-8 flex flex-col gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="border border-border bg-white p-5">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <Skeleton className="h-3.5 w-48 mb-2" />
+                  <Skeleton className="h-3 w-56" />
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full shrink-0" />
+              </div>
+              <Skeleton className="h-3 w-full max-w-md mt-3" />
+              <div className="mt-4 grid grid-cols-3 gap-4 border-t border-border pt-4">
+                {Array.from({ length: 3 }).map((_, j) => (
+                  <div key={j}>
+                    <Skeleton className="h-2.5 w-16 mb-2" />
+                    <Skeleton className="h-3.5 w-12" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
       ) : fundsError ? (
         <p className="mt-8 text-xs text-[#d03b3b]">Couldn&apos;t load named funds: {fundsError}</p>
       ) : (

@@ -4,13 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { IconLogo, IconHome, IconBuilding, IconWallet, IconSettings } from "../icons";
+import { IconLogo, IconHome, IconBuilding, IconWallet, IconSettings, IconBarChart } from "../icons";
 import type { SVGProps } from "react";
 
 const LINKS: { href: string; label: string; icon: (props: SVGProps<SVGSVGElement>) => React.ReactElement }[] = [
   { href: "/portal", label: "Overview", icon: IconHome },
   { href: "/portal/institutions", label: "My Institutions", icon: IconBuilding },
   { href: "/portal/funds", label: "My Funds", icon: IconWallet },
+  { href: "/portal/analytics", label: "Analytics", icon: IconBarChart },
   { href: "/portal/settings", label: "Settings", icon: IconSettings },
 ];
 

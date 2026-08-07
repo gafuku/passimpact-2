@@ -9,6 +9,11 @@ import { Explorer } from "../../../components/report/Explorer";
 import { Lockbox } from "../../../components/report/Lockbox";
 import { ReportChat } from "../../../components/report/ReportChat";
 import { useInstitutionReports } from "../../../hooks/useInstitutionReports";
+import { Skeleton, KpiRowSkeleton } from "../../../components/Skeleton";
+import { ChartCard } from "../../../components/analytics/shared";
+import { RevenueExpenseDonuts, BalanceSheetBarChart, EndowmentAllocationDonut } from "../../../components/analytics/ReportCharts";
+import { MoneyFlowGraph } from "../../../components/analytics/MoneyFlowGraph";
+import { InstitutionLocationMap } from "../../../components/analytics/USMap";
 
 export function ReportDetailView({ slug, year }: { slug: string; year: number }) {
   const { institution, reports, loading, error } = useInstitutionReports(slug);
@@ -17,8 +22,21 @@ export function ReportDetailView({ slug, year }: { slug: string; year: number })
     return (
       <div className="flex min-h-screen flex-col font-sans bg-background text-foreground">
         <Navbar />
-        <main id="main-content" className="flex flex-1 items-center justify-center">
-          <p className="text-xs text-text-muted italic">Loading report…</p>
+        <main id="main-content" className="flex flex-1 flex-col">
+          <section className="bg-surface py-16 md:py-20">
+            <div className="mx-auto max-w-5xl px-inset">
+              <Skeleton className="h-3 w-40 mb-8" />
+              <div className="border-b border-border pb-8 mb-8">
+                <div className="flex gap-3 mb-3">
+                  <Skeleton className="h-5 w-32 rounded-full" />
+                  <Skeleton className="h-5 w-24 rounded-full" />
+                </div>
+                <Skeleton className="h-4 w-72 mb-3" />
+                <Skeleton className="h-3 w-96" />
+              </div>
+              <KpiRowSkeleton count={4} />
+            </div>
+          </section>
         </main>
         <Footer />
       </div>
@@ -76,6 +94,34 @@ export function ReportDetailView({ slug, year }: { slug: string; year: number })
             )}
 
             <ReportOverview institution={institution} report={report} previousReport={previousReport} />
+
+            <div className="mb-16">
+              <span className="text-xs font-semibold uppercase tracking-wider text-text-faint">Visualized</span>
+              <h2 className="mt-2 text-lg font-sans text-text">This report, charted</h2>
+              <div className="mt-6 flex flex-col gap-6">
+                <ChartCard
+                  title="Where the money flows"
+                  subtitle={`${institution.shortName} at the center — money flowing in from revenue sources and out to expense categories in ${report.fy}.`}
+                >
+                  <MoneyFlowGraph report={report} institutionName={institution.shortName} />
+                </ChartCard>
+                <ChartCard title="Revenue & expense mix" subtitle={`${report.fy} operating activity, broken down.`}>
+                  <RevenueExpenseDonuts report={report} />
+                </ChartCard>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <ChartCard title="Balance sheet snapshot" subtitle="Assets, liabilities, net assets, and debt.">
+                    <BalanceSheetBarChart report={report} />
+                  </ChartCard>
+                  <ChartCard title="Endowment allocation" subtitle="How the endowment is restricted, and what it pays out.">
+                    <EndowmentAllocationDonut report={report} />
+                  </ChartCard>
+                </div>
+                <ChartCard title="Where this institution is located" subtitle={institution.location}>
+                  <InstitutionLocationMap location={institution.location} />
+                </ChartCard>
+              </div>
+            </div>
+
             <YearLens reports={reports} />
             <Explorer reports={reports} />
             <Lockbox report={report} />

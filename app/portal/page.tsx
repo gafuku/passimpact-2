@@ -7,6 +7,7 @@ import { usePublicInstitutions } from "@/app/hooks/usePublicInstitutions";
 import { usePublicNamedFunds } from "@/app/hooks/usePublicNamedFunds";
 import { useRecentChats } from "@/app/hooks/useRecentChats";
 import { IconBuilding, IconWallet, IconArrowRight } from "@/app/components/icons";
+import { Skeleton, KpiRowSkeleton } from "@/app/components/Skeleton";
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -27,7 +28,14 @@ function RecentChatsPanel() {
         <p className="text-xs text-text-muted mb-4">Conversations you&apos;ve had across your reports, saved to your portal.</p>
 
         {loading ? (
-          <p className="text-xs text-text-faint italic">Loading…</p>
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="rounded border border-border p-3">
+                <Skeleton className="h-3 w-32 mb-2" />
+                <Skeleton className="h-3 w-full" />
+              </div>
+            ))}
+          </div>
         ) : chats.length === 0 ? (
           <p className="text-xs text-text-faint italic">
             No conversations yet — open a report and ask its assistant something to see it here.
@@ -92,7 +100,19 @@ export default function PortalOverviewPage() {
         </p>
 
         {loading ? (
-          <p className="mt-8 text-xs text-text-muted italic">Loading your portal…</p>
+          <div className="mt-8 flex flex-col gap-6">
+            <KpiRowSkeleton count={4} />
+            <div className="grid gap-6 lg:grid-cols-2">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="border border-border bg-white p-5">
+                  <Skeleton className="h-3.5 w-40 mb-4" />
+                  {Array.from({ length: 3 }).map((_, j) => (
+                    <Skeleton key={j} className="h-3 w-full mb-2" />
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
         ) : (
           <>
             {/* Summary stats */}

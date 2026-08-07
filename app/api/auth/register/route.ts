@@ -1,22 +1,25 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/prisma";
 import * as bcrypt from "bcryptjs";
+import { z } from "zod";
+import { apiError } from "@/app/lib/apiError";
+import { withDbRetry } from "@/app/lib/withDbRetry";
+
+const registerSchema = z.object({
+  name: z.string().trim().min(1).max(100).optional(),
+  email: z.string().trim().toLowerCase().email("Enter a valid email address"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(200),
+});
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { message: "Email and password are required" },
-        { status: 400 }
-      );
+    const parsed = registerSchema.safeParse(await req.json());
+    if (!parsed.success) {
+      return NextResponse.json({ message: parsed.error.issues[0]?.message ?? "Invalid request" }, { status: 400 });
     }
+    const { name, email, password } = parsed.data;
 
-    // Check if user already exists
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-    });
+    const existingUser = await withDbRetry(() => prisma.user.findUnique({ where: { email } }));
 
     if (existingUser) {
       return NextResponse.json(
@@ -25,27 +28,19 @@ export async function POST(req: Request) {
       );
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user (defaults to role: "USER")
-    const newUser = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-      },
-    });
+    const newUser = await withDbRetry(() =>
+      prisma.user.create({
+        data: { name, email, password: hashedPassword },
+      })
+    );
 
     return NextResponse.json(
       { message: "Profile registered successfully", userId: newUser.id },
       { status: 201 }
     );
   } catch (error) {
-    console.error("Registration error:", error);
-    return NextResponse.json(
-      { message: "Internal server error" },
-      { status: 500 }
-    );
+    return apiError(error, "POST /api/auth/register", "message");
   }
 }
