@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Navbar } from "../components/Navbar";
 import { Footer } from "../components/Footer";
 import { usePublicInstitutions } from "../hooks/usePublicInstitutions";
+import { InstitutionCardSkeletonGrid } from "../components/Skeleton";
 
 export default function UniversitiesBrowsePage() {
   const { institutions, loading, error } = usePublicInstitutions();
@@ -62,7 +63,7 @@ export default function UniversitiesBrowsePage() {
         <section className="bg-surface py-12 flex-1">
           <div className="mx-auto max-w-6xl px-inset">
             {loading ? (
-              <p className="text-xs text-text-muted italic">Loading institutions…</p>
+              <InstitutionCardSkeletonGrid />
             ) : error ? (
               <p className="text-xs text-[#d03b3b]">Couldn&apos;t load institutions: {error}</p>
             ) : filtered.length === 0 ? (

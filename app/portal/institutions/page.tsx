@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useAuth } from "../../components/portal/AuthContext";
 import { usePublicInstitutions } from "../../hooks/usePublicInstitutions";
+import { Skeleton } from "../../components/Skeleton";
 
 export default function PortalInstitutionsPage() {
   const { followedInstitutions, toggleFollowInstitution } = useAuth();
@@ -20,7 +21,20 @@ export default function PortalInstitutionsPage() {
       </p>
 
       {loading ? (
-        <p className="mt-8 text-xs text-text-muted italic">Loading institutions…</p>
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="border border-border bg-white p-5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <Skeleton className="h-3.5 w-40 mb-2" />
+                  <Skeleton className="h-3 w-28" />
+                </div>
+                <Skeleton className="h-6 w-16 rounded-full shrink-0" />
+              </div>
+              <Skeleton className="h-3 w-48 mt-4" />
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <p className="mt-8 text-xs text-[#d03b3b]">Couldn&apos;t load institutions: {error}</p>
       ) : (

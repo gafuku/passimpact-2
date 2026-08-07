@@ -19,6 +19,8 @@ model User {
   accounts      Account[]
   sessions      Session[]
   chatSessions  ChatSession[]
+  followedInstitutions FollowedInstitution[]
+  followedFunds        FollowedFund[]
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 }
@@ -68,6 +70,7 @@ model Institution {
   location    String
   reports     Report[]
   namedFunds  NamedFund[]
+  followedBy  FollowedInstitution[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
@@ -125,6 +128,37 @@ model NamedFund {
   established     Int
 
   institution     Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+  followedBy      FollowedFund[]
+}
+
+// A donor's "track this institution/fund" state — used to drive the portal
+// dashboard's tracked lists. Previously lived only in browser localStorage under
+// one global key, which meant any account created in the same browser inherited
+// whatever the last signed-in account had tracked. Scoping it to the user row
+// closes that leak and matches how everything else user-specific (chat history)
+// is already persisted.
+model FollowedInstitution {
+  id            String   @id @default(cuid())
+  userId        String
+  institutionId String
+  createdAt     DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  institution Institution @relation(fields: [institutionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, institutionId])
+}
+
+model FollowedFund {
+  id        String   @id @default(cuid())
+  userId    String
+  fundId    String
+  createdAt DateTime @default(now())
+
+  user User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fund NamedFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, fundId])
 }
 
 model DraftReport {

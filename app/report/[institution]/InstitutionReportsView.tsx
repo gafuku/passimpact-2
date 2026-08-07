@@ -5,6 +5,10 @@ import { Navbar } from "../../components/Navbar";
 import { Footer } from "../../components/Footer";
 import { useInstitutionReports } from "../../hooks/useInstitutionReports";
 import { FollowInstitutionButton } from "../../components/portal/FollowInstitutionButton";
+import { Skeleton, ReportRowSkeleton } from "../../components/Skeleton";
+import { ChartCard } from "../../components/analytics/shared";
+import { InstitutionRevenueExpenseByYearChart, InstitutionEndowmentTrendChart } from "../../components/analytics/TrendCharts";
+import { InstitutionLocationMap } from "../../components/analytics/USMap";
 
 export function InstitutionReportsView({ slug }: { slug: string }) {
   const { institution, reports, loading, error } = useInstitutionReports(slug);
@@ -14,13 +18,27 @@ export function InstitutionReportsView({ slug }: { slug: string }) {
       <Navbar />
       <main id="main-content" className="flex flex-1 flex-col">
         <section className="bg-surface py-16 md:py-20 flex-1">
-          <div className="mx-auto max-w-3xl px-inset">
+          <div className="mx-auto max-w-5xl px-inset">
             <Link href="/report" className="inline-flex items-center gap-1 text-xs text-text-muted hover:text-text transition-colors mb-8">
               ← All institutions
             </Link>
 
             {loading ? (
-              <p className="text-xs text-text-muted italic">Loading…</p>
+              <div className="flex flex-col gap-8">
+                <div className="flex items-center gap-4">
+                  <Skeleton className="h-14 w-14 rounded-full shrink-0" />
+                  <div>
+                    <Skeleton className="h-4 w-56 mb-2" />
+                    <Skeleton className="h-3 w-40" />
+                  </div>
+                </div>
+                <Skeleton className="h-3 w-full max-w-xl" />
+                <div className="flex flex-col gap-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <ReportRowSkeleton key={i} />
+                  ))}
+                </div>
+              </div>
             ) : error || !institution ? (
               <p className="text-xs text-[#d03b3b]">{error ? `Couldn't load this institution: ${error}` : "Institution not found."}</p>
             ) : (
@@ -89,6 +107,26 @@ export function InstitutionReportsView({ slug }: { slug: string }) {
                       </span>
                     </Link>
                   ))}
+                </div>
+
+                <div className="mt-16 flex flex-col gap-6">
+                  <div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-text-faint">Analytics</span>
+                    <h2 className="mt-2 text-lg font-sans text-text">Comparing {institution.shortName}'s years</h2>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <ChartCard title="Revenue vs. expenses by year" subtitle="Every fiscal year on file, side by side.">
+                      <InstitutionRevenueExpenseByYearChart points={reports} />
+                    </ChartCard>
+                    <ChartCard title="Endowment & assets over time" subtitle="Market value by fiscal year.">
+                      <InstitutionEndowmentTrendChart points={reports} />
+                    </ChartCard>
+                  </div>
+
+                  <ChartCard title="Where this institution is located" subtitle={institution.location}>
+                    <InstitutionLocationMap location={institution.location} />
+                  </ChartCard>
                 </div>
               </>
             )}

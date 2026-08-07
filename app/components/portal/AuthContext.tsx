@@ -1,16 +1,15 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useSession } from "next-auth/react";
+import axiosInstance from "../../lib/axiosInstance";
 
 export type NotificationPrefs = { newReports: boolean; fundUpdates: boolean };
 
-type AuthState = {
+type AuthContextValue = {
   followedInstitutions: string[];
   followedFunds: string[];
   notificationPrefs: NotificationPrefs;
-};
-
-type AuthContextValue = AuthState & {
   hydrated: boolean;
   updateNotificationPrefs: (prefs: Partial<NotificationPrefs>) => void;
   toggleFollowInstitution: (slug: string) => void;
@@ -19,69 +18,116 @@ type AuthContextValue = AuthState & {
   isFollowingFund: (id: string) => boolean;
 };
 
-const STORAGE_KEY = "pass-impact:portal-follows";
-
-// Follows start empty — institutions/funds now come from whatever's actually been
-// published to the database, so there's no fixed slug we can safely pre-populate.
-const DEFAULT_STATE: AuthState = {
-  followedInstitutions: [],
-  followedFunds: [],
-  notificationPrefs: { newReports: true, fundUpdates: true },
-};
+// This is a demo preference with no email delivery behind it (see the portal
+// settings page), so it isn't worth a DB column — just namespaced by user id so
+// one account's toggle doesn't visually bleed into the next account signed into
+// the same browser.
+const DEFAULT_PREFS: NotificationPrefs = { newReports: true, fundUpdates: true };
+const prefsKey = (userId: string) => `pass-impact:notification-prefs:${userId}`;
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<AuthState>(DEFAULT_STATE);
+  const { data: session, status } = useSession();
+  const userId = session?.user?.id ?? null;
+
+  const [followedInstitutions, setFollowedInstitutions] = useState<string[]>([]);
+  const [followedFunds, setFollowedFunds] = useState<string[]>([]);
+  const [notificationPrefs, setNotificationPrefs] = useState<NotificationPrefs>(DEFAULT_PREFS);
   const [hydrated, setHydrated] = useState(false);
+  const loadedForUser = useRef<string | null>(null);
 
+  // Followed institutions/funds are real, DB-backed per-user data — fetched fresh
+  // whenever the signed-in user id changes (including sign-out then sign-in as a
+  // different account in the same browser) so one donor never inherits another's
+  // tracked institutions the way a single shared localStorage key used to allow.
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setState((prev) => ({ ...prev, ...JSON.parse(raw) }));
-    } catch {
-      // ignore malformed/blocked storage — fall back to signed-out state
+    if (status === "loading") return;
+
+    if (!userId) {
+      setFollowedInstitutions([]);
+      setFollowedFunds([]);
+      setNotificationPrefs(DEFAULT_PREFS);
+      loadedForUser.current = null;
+      setHydrated(true);
+      return;
     }
-    setHydrated(true);
-  }, []);
 
-  useEffect(() => {
-    if (!hydrated) return;
+    if (loadedForUser.current === userId) return;
+    loadedForUser.current = userId;
+    setHydrated(false);
+
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const raw = localStorage.getItem(prefsKey(userId));
+      setNotificationPrefs(raw ? { ...DEFAULT_PREFS, ...JSON.parse(raw) } : DEFAULT_PREFS);
     } catch {
-      // storage unavailable (private browsing, etc.) — session just won't persist
+      setNotificationPrefs(DEFAULT_PREFS);
     }
-  }, [state, hydrated]);
 
-  const updateNotificationPrefs = useCallback((prefs: Partial<NotificationPrefs>) => {
-    setState((prev) => ({ ...prev, notificationPrefs: { ...prev.notificationPrefs, ...prefs } }));
-  }, []);
+    axiosInstance
+      .get("/api/portal/follows")
+      .then((res) => {
+        setFollowedInstitutions(res.data.institutionSlugs ?? []);
+        setFollowedFunds(res.data.fundIds ?? []);
+      })
+      .catch(() => {
+        setFollowedInstitutions([]);
+        setFollowedFunds([]);
+      })
+      .finally(() => setHydrated(true));
+  }, [userId, status]);
 
-  const toggleFollowInstitution = useCallback((slug: string) => {
-    setState((prev) => ({
-      ...prev,
-      followedInstitutions: prev.followedInstitutions.includes(slug)
-        ? prev.followedInstitutions.filter((s) => s !== slug)
-        : [...prev.followedInstitutions, slug],
-    }));
-  }, []);
+  const updateNotificationPrefs = useCallback(
+    (prefs: Partial<NotificationPrefs>) => {
+      setNotificationPrefs((prev) => {
+        const next = { ...prev, ...prefs };
+        if (userId) {
+          try {
+            localStorage.setItem(prefsKey(userId), JSON.stringify(next));
+          } catch {
+            // storage unavailable (private browsing, etc.) — preference just won't persist
+          }
+        }
+        return next;
+      });
+    },
+    [userId]
+  );
 
-  const toggleFollowFund = useCallback((id: string) => {
-    setState((prev) => ({
-      ...prev,
-      followedFunds: prev.followedFunds.includes(id) ? prev.followedFunds.filter((f) => f !== id) : [...prev.followedFunds, id],
-    }));
-  }, []);
+  const toggleFollowInstitution = useCallback(
+    (slug: string) => {
+      if (!userId) return;
+      const wasFollowing = followedInstitutions.includes(slug);
+      setFollowedInstitutions((prev) => (wasFollowing ? prev.filter((s) => s !== slug) : [...prev, slug]));
+      axiosInstance.post("/api/portal/follows/institutions", { slug }).catch(() => {
+        setFollowedInstitutions((prev) => (wasFollowing ? [...prev, slug] : prev.filter((s) => s !== slug)));
+      });
+    },
+    [userId, followedInstitutions]
+  );
+
+  const toggleFollowFund = useCallback(
+    (id: string) => {
+      if (!userId) return;
+      const wasFollowing = followedFunds.includes(id);
+      setFollowedFunds((prev) => (wasFollowing ? prev.filter((f) => f !== id) : [...prev, id]));
+      axiosInstance.post("/api/portal/follows/funds", { id }).catch(() => {
+        setFollowedFunds((prev) => (wasFollowing ? [...prev, id] : prev.filter((f) => f !== id)));
+      });
+    },
+    [userId, followedFunds]
+  );
 
   const value: AuthContextValue = {
-    ...state,
+    followedInstitutions,
+    followedFunds,
+    notificationPrefs,
     hydrated,
     updateNotificationPrefs,
     toggleFollowInstitution,
     toggleFollowFund,
-    isFollowingInstitution: (slug) => state.followedInstitutions.includes(slug),
-    isFollowingFund: (id) => state.followedFunds.includes(id),
+    isFollowingInstitution: (slug) => followedInstitutions.includes(slug),
+    isFollowingFund: (id) => followedFunds.includes(id),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
